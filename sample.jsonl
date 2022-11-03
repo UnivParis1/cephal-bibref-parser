@@ -1,0 +1,51 @@
+{
+  "id": 1,
+  "text": "Amable, B., Ledezma, I., & Robin, S. (2016). Product market regulation, innovation, and productivity. Research Policy, 45(10), 2087-2104.",
+  "label": [
+    [
+      0,
+      10,
+      "Auteur"
+    ],
+    [
+      12,
+      23,
+      "Auteur"
+    ],
+    [
+      27,
+      36,
+      "Auteur"
+    ],
+    [
+      38,
+      42,
+      "DatePublication"
+    ],
+    [
+      45,
+      100,
+      "Titre"
+    ],
+    [
+      102,
+      117,
+      "TitreRevue"
+    ],
+    [
+      119,
+      121,
+      "Volume"
+    ],
+    [
+      122,
+      124,
+      "Numero"
+    ],
+    [
+      127,
+      136,
+      "Pages"
+    ]
+  ]
+}

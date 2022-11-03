@@ -93,8 +93,8 @@ def expand_dates(structured_date):
     month = structured_date['month']
     dates = [f"{month} {year}", str(year)]
     if type(int(month)) == int and int(month) > 0 and int(month) < 13:
-        month_name = calendar.month_name[int(month)].capitalize()
-        dates = [f"{month_name} {year}"] + dates
+        month_name = calendar.month_name[int(month)]
+        dates = [f"{month_name.capitalize()} {year}", f"{month_name} {year}"] + dates
     return dates
 
 
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     # For month names generation
     locale.setlocale(locale.LC_ALL, 'fr_FR.utf8')
     # store jsonlines
-    jsonlines = []
+    jsonlines_container = []
     # load all citations stylesheets
     csls = glob.glob('csl/*.csl')
     random.shuffle(csls)
@@ -224,7 +224,7 @@ if __name__ == '__main__':
                     labels.sort()
                     line = {"id": counter, "text": string_reference, "label": labels,
                             "csl": bibliography.style.root.base}
-                    jsonlines.append(line)
+                    jsonlines_container.append(line)
                     print(counter)
                     counter += 1
                 except MissingFieldException as mfe:
@@ -235,7 +235,7 @@ if __name__ == '__main__':
             print(f">> error with {bibliography.style.root.base} : #{e}")
             continue
     # shuffle and write the result to output file
-    random.shuffle(jsonlines)
+    random.shuffle(jsonlines_container)
     with jsonlines.Writer(output_file) as writer:
-        for line in jsonlines:
+        for line in jsonlines_container:
             writer.write(line)

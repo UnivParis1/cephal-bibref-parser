@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 from time import sleep
 
-import pycurl
-import certifi
-import urllib
-from io import BytesIO
+import requests
 import argparse
+from timeit import default_timer as timer
 
-DEFAULT_OUTPUT_FILE_NAME = "halshs_complete_1mo.bib"
+DEFAULT_OUTPUT_FILE_NAME = "halshs_complete.bib"
 DEFAULT_ROWS = 10000
 
-URL = "https://api.archives-ouvertes.fr/search/halshs/?"
+HAL_API_URL = "https://api.archives-ouvertes.fr/search/halshs/?"
 
-FILTERS = "docType_s:(ART OR OUV OR COUV OR COMM OR THESE OR HDR OR REPORT OR NOTICE OR PROCEEDINGS)"
+LIST_QUERY_TEMPLATE = "q=docType_s:(ART OR OUV OR COUV OR COMM OR THESE OR HDR OR REPORT OR NOTICE OR PROCEEDINGS)" \
+                      f"&cursorMark=[CURSOR]&sort=docid asc&rows=1000"
+BIBTEX_QUERY_TEMPLATE = "wt=bibtex&q=docid:[DOCID]"
 
 MAX_ATTEMPS = 10
 
@@ -21,8 +21,6 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Fetches HAL SHS bibliographic references in Bibref format.')
     parser.add_argument('file', metavar='F', type=str, nargs=1,
                         help='Output file relative path')
-    parser.add_argument('--start', dest='start', default=0,
-                        help='Beginning offset')
     parser.add_argument('--rows', dest='rows',
                         help='Number of requested rows per request', default=DEFAULT_ROWS)
     parser.add_argument('--reset', dest='reset', action='store_true', default=False,
@@ -32,48 +30,42 @@ def parse_arguments():
 
 if __name__ == '__main__':
     args = parse_arguments()
-    start = args.start
     rows = args.rows
     reset = args.reset
     file = args.file[0]
-    goon = True
+    cursor = "*"
     attempts = 0
+    total = 0
+    processed = 0
     if reset:
         open(file, 'w').close()
-    while goon:
-        print(start)
-        try:
-            params = {'rows': rows, 'start': start, 'wt': 'bibtex', 'fq': FILTERS}
-            request_string = URL + urllib.parse.urlencode(params)
-            buffer = BytesIO()
-            c = pycurl.Curl()
-            c.setopt(c.URL, request_string)
-            c.setopt(c.WRITEDATA, buffer)
-            c.setopt(c.CAINFO, certifi.where())
-            c.setopt(c.VERBOSE, True)
-            c.setopt(c.CONNECTTIMEOUT, 36000)
-            c.setopt(c.TIMEOUT, 36000)
-            c.perform()
-            c.close()
-            body = buffer.getvalue()
-            str_response = body.decode()
-            if str_response.find("cURL error (28): Timeout was reached") >= 0:
-                raise Exception("Request timeout")
-            if str_response.find("cURL error") >= 0:
-                raise Exception("Unknown error")
-        except Exception as e:
-            print(f"Request error: {e}")
-            print('Wait before retry')
-            sleep(10)
-            attempts + 1
-            if attempts >= MAX_ATTEMPS:
-                print("Max number of attempts reached, abort")
-                exit()
-            continue
-        start += rows
-        goon = len(str_response) > 0
-        print(str_response[1:10000])
-        attempts = 0
-        with open(file, "a") as output_file:
-            output_file.write(str_response)
-            output_file.flush()
+    prev_top = top = start = timer()
+    while True:
+        list_request_string = HAL_API_URL + LIST_QUERY_TEMPLATE.replace('[CURSOR]', str(cursor)).replace('[ROWS]',
+                                                                                                         str(rows))
+        response = requests.get(list_request_string, timeout=360)
+        json_response = response.json()
+        if not total:
+            total = int(json_response['response']['numFound'])
+        cursor = json_response['nextCursorMark']
+        docs = json_response['response']['docs']
+        if len(docs) == 0:
+            print("Dowload complete !")
+            break
+        for doc in docs:
+            docid = doc['docid']
+            list_request_string = HAL_API_URL + BIBTEX_QUERY_TEMPLATE.replace('[DOCID]', str(docid))
+            response = requests.get(list_request_string, timeout=360)
+            bibtex_response = response.content.decode()
+            with open(file, "a") as output_file:
+                output_file.write(bibtex_response)
+                processed += 1
+                prev_top = top
+                top = timer()
+                elapsed = top - start
+                average = elapsed / processed
+                duration = top - prev_top
+                prevision = average * total
+                print(f"{processed}/{total} : {docid}")
+                if processed % 100 == 0:
+                    print(f"(time: {duration}, moy.: {average}, total: {elapsed}, prevision: {prevision}")

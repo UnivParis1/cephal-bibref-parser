@@ -1,8 +1,15 @@
 .idea
 .ipynb_checkpoints
 model
-output
-/ner_bert.ipynb
-/ner_datasetreference.csv
-/halshs.bib
-/auto.jsonl
+output*
+
+#data formats
+*.jsonl
+*.json
+*.csv
+*.bib
+*.csl
+
+#model formats
+*.model
+*.bin

@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import itertools
 import os
+from pathlib import Path
 
 import httpx as httpx
 import requests
@@ -14,8 +15,10 @@ DEFAULT_ROWS = 10000
 HAL_API_URL = "https://api.archives-ouvertes.fr/search/halshs/?"
 
 LIST_QUERY_TEMPLATE = "q=docType_s:(ART OR OUV OR COUV OR COMM OR THESE OR HDR OR REPORT OR NOTICE OR PROCEEDINGS)" \
-                      f"&cursorMark=[CURSOR]&sort=doc_id asc&rows=[ROWS]"
-BIBTEX_QUERY_TEMPLATE = "wt=bibtex&q=doc_id:[DOCID]"
+                      "&cursorMark=[CURSOR]" \
+                      "&sort=docid asc&rows=[ROWS]"
+
+BIBTEX_QUERY_TEMPLATE = "wt=bibtex&q=docid:[DOCID]"
 
 MAX_ATTEMPTS = 10
 
@@ -38,7 +41,7 @@ async def fetch_bibtex(doc_id, directory, client):
     if os.path.exists(file):
         print(f"{doc_id} Bibtex yet present")
         return
-    print(f"{doc_id} begin")
+    print(f"{doc_id} begin : export to {file}")
     bibtex_request_string = HAL_API_URL + BIBTEX_QUERY_TEMPLATE.replace('[DOCID]', str(doc_id))
     response = await client.get(bibtex_request_string, timeout=360)
     bibtex_response = response.content.decode()
@@ -50,19 +53,23 @@ async def fetch_bibtex(doc_id, directory, client):
 async def fetch_bibtex_group(doc_ids, directory):
     async with httpx.AsyncClient() as client:
         return await asyncio.gather(
-            *map(fetch_bibtex, doc_ids, directory, itertools.repeat(client), )
+            *map(fetch_bibtex, doc_ids, [directory] * len(doc_ids), itertools.repeat(client), )
         )
 
 
 async def main(args):
     rows = args.rows
+    print(f"Rows per request : {rows}")
     directory = args.dir
+    Path(directory).mkdir(parents=True, exist_ok=True)
+    print(f"Output directory : {directory}")
     cursor = "*"
     total = 0
     while True:
-        bibtex_request_string = HAL_API_URL + LIST_QUERY_TEMPLATE.replace('[CURSOR]', str(cursor)).replace('[ROWS]',
-                                                                                                           str(rows))
-        response = requests.get(bibtex_request_string, timeout=360)
+        json_request_string = HAL_API_URL + LIST_QUERY_TEMPLATE.replace('[CURSOR]', str(cursor)).replace('[ROWS]',
+                                                                                                         str(rows))
+        print(f"Request to HAL : {json_request_string}")
+        response = requests.get(json_request_string, timeout=360)
         json_response = response.json()
         if not total:
             total = int(json_response['response']['numFound'])
@@ -73,7 +80,7 @@ async def main(args):
             print("Download complete !")
             break
         print(f"Group of {len(docs)} documents : begin")
-        task = asyncio.create_task(fetch_bibtex_group([doc['doc_id'] for doc in docs], directory))
+        task = asyncio.create_task(fetch_bibtex_group([doc['docid'] for doc in docs], directory))
         print("Group end")
         await task
 
@@ -82,7 +89,9 @@ if __name__ == '__main__':
     arguments = parse_arguments()
     while True:
         try:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(main(arguments))
-        except (RuntimeError, KeyError):
+            loop = asyncio.new_event_loop()
+            result = loop.run_until_complete(main(arguments))
+            print(result)
+        except (RuntimeError, KeyError) as e:
+            print(f"Error : {e}")
             continue

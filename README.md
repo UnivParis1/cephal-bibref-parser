@@ -46,9 +46,23 @@ Quelques remplacements dans le fichier bib (macros BibTex)
  ./replace_in_bib.sh my_dump_hal.bib 
 ```
 
-* [generate_samples.py](generate_samples.py)
+* [convert_bibtex_to_jsonl.py](convert_bibtex_to_jsonl.py)
 
 Génération d'un fichier auto.jsonl dans le format accepté notamment par Doccano.
+
+```shell
+$ python3 convert_bibtex_to_jsonl.py -h
+usage: convert_bibtex_to_jsonl.py [-h] [--csl CSL] [--source SOURCE] [--dest DEST] [--sample SAMPLE_MODE]
+
+Fetches HAL SHS bibliographic references in Bibref format.
+
+options:
+  -h, --help            show this help message and exit
+  --csl CSL             CSL files directory path
+  --source SOURCE       Bibtex source file
+  --dest DEST           Jsonl destination file
+  --sample SAMPLE_MODE  Process one of 100 references only
+```
 
 * [convert_jsonl_to_iob.py](convert_jsonl_to_iob.py)
 

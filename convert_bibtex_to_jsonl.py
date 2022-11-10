@@ -115,7 +115,7 @@ def expand_dates(structured_date):
     year = structured_date['year']
     month = structured_date['month']
     dates = [f"{month} {year}", str(year)]
-    if type(int(month)) == int and int(month) > 0 and int(month) < 13:
+    if type(int(month)) == int and 0 < int(month) < 13:
         month_name = calendar.month_name[int(month)]
         dates = [f"{month_name.capitalize()} {year}", f"{month_name} {year}"] + dates
     return dates
@@ -128,9 +128,12 @@ def expand_string(string):
 
 
 def detect_substring(global_string, substring):
-    if global_string.count(substring) > 1:
+    occurences = list(re.finditer(rf"(?<!\w){re.escape(substring)}(?!\w)", global_string))
+    if len(occurences) > 1:
         raise DoubleFieldException(f"{substring} detected twice or more in {global_string}")
-    return global_string.find(substring)
+    if(len(occurences)) == 0:
+        return -1
+    return occurences[0].span()[0]
 
 
 class Error(Exception):
@@ -186,7 +189,7 @@ def json_line(bibliographies: list[CitationStylesBibliography], key: object,
                 # reject samples without labels
                 continue
             # check that label are not overlapping or neighbours
-            overlaps = [labels[i] for i in range(1, len(labels) - 1) if int(labels[i][0]) <= int(labels[i - 1][1])]
+            overlaps = [labels[i] for i in range(1, len(labels)) if int(labels[i][0]) <= int(labels[i - 1][1])]
             assert len(overlaps) == 0
             line = {"id": id, "text": string_reference, "label": labels,
                     "csl": chosen_bibliography.style.root.base}

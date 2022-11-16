@@ -66,10 +66,66 @@ options:
 
 * [convert_jsonl_to_iob.py](convert_jsonl_to_iob.py)
 
-Conversion du fichier jsonl en IOB pour l'entraînement du modèle
+Conversion du fichier jsonl en IOB pour l'entraînement du modèle.
 
-* [bert_bibliographic_references_parsing.ipynb](bert_bibliographic_references_parsing.ipynb)
+Le script génère plusieurs fichiers (un par langue rencontrée dans les titres). Le format obtenu s'éloigne d'IOB en ceci
+que seuls les champs considérés comme multivalués (voir la constante MULTIVALUED_TAGS) sont préfixés par B- ou I-.
 
-Conversion du fichier jsonl en IOB pour l'entraînement du modèle
+```shell
+$ python3 convert_jsonl_to_iob.py --help
 
+usage: convert_jsonl_to_iob.py [-h] [--input INPUT] [--output-dir OUTPUT_DIR] [--output-filename OUTPUT_FILENAME_PREFIX]
 
+Convert jsonl file to IOB format.
+
+options:
+  -h, --help            show this help message and exit
+  --input INPUT         Input sentence
+  --output-dir OUTPUT_DIR
+                        Output directory
+  --output-filename OUTPUT_FILENAME_PREFIX
+                        Output file name prefix
+```
+
+* [bert_bibref_parsing_parser_training.py](bert_bibref_parsing_parser_training.py)
+
+Code d'entraînement du modèle
+
+```shell
+$ python3 bert_bibref_parsing_parser_training.py --help
+
+usage: convert_jsonl_to_iob.py [-h] [--input INPUT] [--output-dir OUTPUT_DIR] [--output-filename OUTPUT_FILENAME_PREFIX]
+
+Convert jsonl file to IOB format.
+
+options:
+  -h, --help            show this help message and exit
+  --input INPUT         Input sentence
+  --output-dir OUTPUT_DIR
+                        Output directory
+  --output-filename OUTPUT_FILENAME_PREFIX
+                        Output file name prefix
+
+```
+
+* [bert_bibref_parser_predict.py](bert_bibref_parser_predict.py)
+
+Code pour la prédiction.
+
+Il est conseillé de laisser le paramètre max length par défaut (128) ou de le régler sur la valeur qui a servi à
+l'entraînement du modèle.
+
+```shell
+$ python3 bert_bibref_parser_predict.py --help
+
+usage: bert_bibref_parser_predict.py [-h] --input INPUT [--max-length MAX_LENGTH]
+
+Fine tune Camembert for bibliographic references parsing.
+
+options:
+  -h, --help            show this help message and exit
+  --input INPUT         Input sentence
+  --max-length MAX_LENGTH
+                        Wordpiece tokenized sentence max length
+
+```

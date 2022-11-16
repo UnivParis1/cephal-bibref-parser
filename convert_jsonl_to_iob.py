@@ -1,11 +1,26 @@
+import argparse
+
 from convert import convert_to_tags_format
 import json
 from transformers import pipeline
 
-INPUT_FILE = 'allhall.jsonl'
+DEFAULT_INPUT_FILE = 'input.jsonl'
+DEFAULT_OUTPUT_DIR = 'bio_tagged'
+DEFAULT_FILENAME_PREFIX = 'tagged_bib_refs'
 
 
-def to_json(counter, annotations, classifier):
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='Convert jsonl file to IOB format.')
+    parser.add_argument('--input', dest='input',
+                        help='Input sentence', default=DEFAULT_INPUT_FILE)
+    parser.add_argument('--output-dir', dest='output_dir',
+                        help='Output directory', default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument('--output-filename', dest='output_filename_prefix',
+                        help='Output file name prefix', default=DEFAULT_FILENAME_PREFIX)
+    return parser.parse_args()
+
+
+def to_json(counter, annotation, classifier, output_directory, filename_suffix):
     paragraphs = annotation['paragraphs']
     if len(paragraphs) == 0:
         return
@@ -18,7 +33,7 @@ def to_json(counter, annotations, classifier):
     if ' '.join(words) == paragraph['raw']:
         value = {'words': words,
                  'labels': [token['ner'] for token in tokens]}
-        with open(f"bio_tagged/all_tagged_bib_refs_{language}.json", 'a') as file:
+        with open(f"{output_directory}/{filename_suffix}_{language}.json", 'a') as file:
             json.dump(value, file, indent=2)
     else:
         print("sentence integrity issue")
@@ -26,7 +41,14 @@ def to_json(counter, annotations, classifier):
         print(paragraph['raw'])
 
 
-if __name__ == '__main__':
+def main(arguments):
+    input_file = arguments.input
+    output_directory = arguments.output_dir
+    output_filename_prefix = arguments.output_filename_prefix
     classifier = pipeline("text-classification", model="papluca/xlm-roberta-base-language-detection")
-    for index, annotation in enumerate(convert_to_tags_format(INPUT_FILE, format='IOB')):
-        to_json(index, annotation, classifier)
+    for index, annotation in enumerate(convert_to_tags_format(input_file, format='IOB')):
+        to_json(index, annotation, classifier, output_directory, output_filename_prefix)
+
+
+if __name__ == '__main__':
+    main(parse_arguments())

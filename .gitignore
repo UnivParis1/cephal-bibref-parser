@@ -11,6 +11,7 @@ hal_dump
 *.csv
 *.bib
 *.csl
+*.bin
 
 #model formats
 *.model

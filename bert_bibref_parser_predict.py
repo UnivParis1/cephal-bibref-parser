@@ -6,7 +6,7 @@ from data import ModelWrapper
 from install import install
 
 DEFAULT_MAX_LENGTH = 128
-MODEL_DIR = "./output/2022-11-16-5-57-19_9"
+MODEL_DIR = "./model"
 
 install('torch')
 install('transformers')
@@ -21,6 +21,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Fine tune Camembert for bibliographic references parsing.')
     parser.add_argument('--input', dest='input',
                         help='Input sentence', required=True)
+    parser.add_argument('--model', dest='model',
+                        help='Model path', default=MODEL_DIR)
     parser.add_argument('--max-length', dest='max_length',
                         help='Wordpiece tokenized sentence max length', default=DEFAULT_MAX_LENGTH)
     return parser.parse_args()
@@ -29,9 +31,10 @@ def parse_arguments():
 def main(arguments):
     sentence = arguments.input
     max_length = arguments.max_length
+    model = arguments.model
 
     tokenizer = CamembertTokenizerFast.from_pretrained("camembert-base")
-    bibref_parser_model = CamembertForTokenClassification.from_pretrained(MODEL_DIR)
+    bibref_parser_model = CamembertForTokenClassification.from_pretrained(model)
 
     wrapper = ModelWrapper(bibref_parser_model, tokenizer)
 

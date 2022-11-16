@@ -1,6 +1,8 @@
 import json
 import re
 
+MULTIVALUED_TAGS = ["Auteur"]
+
 
 class TOKEN:
     def __init__(self, id, text, ner):
@@ -14,28 +16,32 @@ class TOKEN:
         return self.__dict__
 
 
-def get_bilou_tokens(token_id, text, label='', word_delimiter=' '):
+def get_bilou_tokens(token_id, text, multi=True, label='', word_delimiter=' '):
     tokens = []
     words = [i.strip() for i in text.split(word_delimiter) if len(i) > 0]
-
-    if label:
-        action_tag = 'B-'
+    if multi:
+        if label:
+            action_tag = 'B-'
+        else:
+            action_tag = 'O'
     else:
-        action_tag = 'O'
+        action_tag = ''
 
     for word in words[:-1]:
         token = TOKEN(token_id, word, action_tag + label)
         token_id += 1
-        if label:
+        if label and multi:
             action_tag = 'I-'
 
         tokens.append(token)
-
-    if label:
-        if len(words) == 1:
-            action_tag = 'U-'
-        else:
-            action_tag = 'L-'
+    if multi:
+        if label:
+            if len(words) == 1:
+                action_tag = 'U-'
+            else:
+                action_tag = 'L-'
+    else:
+        action_tag = ''
 
     token = TOKEN(token_id, words[-1], action_tag + label)
     tokens.append(token)
@@ -44,25 +50,26 @@ def get_bilou_tokens(token_id, text, label='', word_delimiter=' '):
     return tokens, token_id
 
 
-def get_iob_tokens(token_id, text, label='', word_delimiter=' '):
+def get_iob_tokens(token_id, text, multi=True, label='', word_delimiter=' '):
     tokens = []
     words = [i.strip() for i in text.split(word_delimiter) if len(i) > 0]
 
-    if label:
-        action_tag = 'B-'
+    if multi:
+        if label:
+            action_tag = 'B-'
+        else:
+            action_tag = 'O'
     else:
-        action_tag = 'O'
+        action_tag = ''
 
     for word in words:
         token = TOKEN(token_id, word, action_tag + label)
         token_id += 1
-        if label:
+        if label and multi:
             action_tag = 'I-'
 
         tokens.append(token)
 
-    token = TOKEN(token_id, words[-1], action_tag + label)
-    tokens.append(token)
     token_id += 1
 
     return tokens, token_id
@@ -134,9 +141,15 @@ def convert_to_tags_format(jsonl_file, para_delimiter='\n\n\n', line_delimiter='
         text_without_entities = ""
         last_idx = 0
 
-        for e in entities:
-            text_without_entities += text[last_idx:e[start_key]] + '_|' * (e[end_key] - e[start_key])
+        for index, e in enumerate(entities):
+            inter = text[last_idx:e[start_key]]
+            # if len(inter) > 0 and last_idx > 0 and not inter.isspace():
+            #     inter = ' ' + inter
+            text_without_entities += inter + "_|" * (e[end_key] - e[start_key])
+            # text_without_entities += inter + '_|' * (e[end_key] - e[start_key])
             last_idx = e[end_key]
+            if index == len(entities) - 1:
+                text_without_entities += text[last_idx:]
 
         token_id = 0
         entity_idx = 0
@@ -161,16 +174,19 @@ def convert_to_tags_format(jsonl_file, para_delimiter='\n\n\n', line_delimiter='
                             'BILOU': get_bilou_tokens,
                             'IOB': get_iob_tokens
                         }
-                        tokens, token_id = converters[format](token_id, text[entity[start_key]:entity[end_key]],
-                                                              entity[label_key], word_delimiter)
+                        labelled_word = text[entity[start_key]:entity[end_key]]
+                        labelled_word_in_context = re.sub(r'(_\|)+', labelled_word, word)
+                        tag = entity[label_key]
+                        multi = tag in MULTIVALUED_TAGS
+                        tokens, token_id = converters[format](token_id, labelled_word_in_context, multi,
+                                                              tag, word_delimiter)
                         sentence.add_tokens(tokens)
-                        paragraph.add_entity([entity[start_key], entity[end_key], entity[label_key]])
+                        paragraph.add_entity([entity[start_key], entity[end_key], tag])
                     else:
                         token = TOKEN(token_id, word, 'O')
                         sentence.add_tokens([token])
                 paragraph.add_sentence(sentence)
             annotation.add_paragraph(paragraph)
 
-        annotations.append(annotation.serialize())
+        yield annotation.serialize()
 
-    return annotations

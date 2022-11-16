@@ -1,7 +1,7 @@
 import json
 import re
 
-MULTIVALUED_TAGS = "Auteur"
+MULTIVALUED_TAGS = ["Auteur"]
 
 
 class TOKEN:

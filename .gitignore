@@ -1,7 +1,9 @@
 .idea
 .ipynb_checkpoints
 model
-output*
+output
+bio_tagged
+hal_dump
 
 #data formats
 *.jsonl

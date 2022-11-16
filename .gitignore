@@ -2,3 +2,17 @@
 .ipynb_checkpoints
 model
 output
+bio_tagged
+hal_dump
+
+#data formats
+*.jsonl
+*.json
+*.csv
+*.bib
+*.csl
+*.bin
+
+#model formats
+*.model
+*.bin

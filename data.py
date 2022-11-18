@@ -61,6 +61,7 @@ class BibRefParserDataset(Dataset):
 
 
 class ModelWrapper:
+    DEFAULT_MAX_LENGTH = 128
 
     def __init__(self, model, tokenizer, device='cpu', optimizer=None):
         self.model = model

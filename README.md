@@ -112,7 +112,7 @@ options:
 
 ```
 
-### 4. Prédition
+### 4. Prédiction
 
 #### 4.a Test de la prédition (ligne de commande)
 

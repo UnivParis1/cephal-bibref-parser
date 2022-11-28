@@ -1,5 +1,4 @@
 import json
-import bibtexparser
 
 dictionnaire_etiquettes = {"Auteur": "author",
  "DatePublication": "year",
@@ -32,7 +31,7 @@ def jsonl_to_dict(file):
         liste_publications = []
         for line in lines:
             line_dict = json.loads(line)
-            opus = {"Auteur" : ""}
+            opus = {}
             for label in line_dict["label"]:
                 if label[-1] in opus.keys():
                     opus[label[-1]] = opus[label[-1]] + ", " + line_dict['text'][label[0]:label[1]]
@@ -68,16 +67,21 @@ def type_doc(dictionary):
 
 def liste_string(liste_dict):
     liste_publications_chaine = []
-    for line in liste_dict:
-        chaine = ""
-        chaine += "@" + line["ENTRYTYPE"] + "{" + str(line["ID"])
-        chaine_2 = ""
-        for key, value in line.items():
-            chaine_2 += str(key) + ' = {' + str(value) + "}, "
-        chaine_3 = chaine + chaine_2
-        liste_publications_chaine.append(chaine_3)
+    for dictionnaire in liste_dict:
+        chaine_1 = "@" + dictionnaire["ENTRYTYPE"]
+        chaine_2 = str(dictionnaire["ID"]) +","
+        chaine_3 = ""
+        for key, value in dictionnaire.items():
+            if (key != "ENTRYTYPE") or (key != "ID"):
+                chaine_3 += key + ' = {' + str(value) + "}, \n"
+        chaine_4 = chaine_1 + "{" + chaine_2 + chaine_3 + "\n }"
+        liste_publications_chaine.append(chaine_4)
     return(liste_publications_chaine)
 
 liste_dictionnaires = jsonl_to_dict("C:/Users/abuccheri/Desktop/all_AB.jsonl")
 liste_dictionnaires_avec_type = type_doc(liste_dictionnaires)
 liste_documents_chaine = liste_string(liste_dictionnaires_avec_type)
+
+with open('C:/Users/abuccheri/Desktop/bibtex_text.bib', 'w', encoding="utf-8") as f:
+    for line in liste_documents_chaine:
+        f.write(f"{line}\n")

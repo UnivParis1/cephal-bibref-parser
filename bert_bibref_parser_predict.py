@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 import argparse
+import json
 
 from data import ModelWrapper
 from install import install
 
-DEFAULT_MAX_LENGTH = 128
 MODEL_DIR = "./model"
 
 install('torch')
@@ -14,7 +14,7 @@ install('seqeval[gpu]')
 install('sklearn')
 
 from transformers import CamembertTokenizerFast, CamembertForTokenClassification
-from utils import TextProcessor
+from utils import TextProcessor, JsonBuilder
 
 
 def parse_arguments():
@@ -24,7 +24,7 @@ def parse_arguments():
     parser.add_argument('--model', dest='model',
                         help='Model path', default=MODEL_DIR)
     parser.add_argument('--max-length', dest='max_length',
-                        help='Wordpiece tokenized sentence max length', default=DEFAULT_MAX_LENGTH)
+                        help='Wordpiece tokenized sentence max length', default=ModelWrapper.DEFAULT_MAX_LENGTH)
     return parser.parse_args()
 
 
@@ -41,11 +41,12 @@ def main(arguments):
     sentence = TextProcessor.prepare(sentence)
 
     predictions_by_word = wrapper.predictions_by_word(sentence, max_length)
+    output = JsonBuilder(sentence, predictions_by_word).build()
     print("```")
     print(sentence)
     print("```")
     print("```")
-    print(list(zip(sentence.split(), predictions_by_word)))
+    print(json.dumps(output))
     print("```")
 
 

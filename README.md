@@ -38,6 +38,8 @@ Puis concatener tous les Bibtex :
 find hal_dump -maxdepth 1 -type f -name '*.bib' -print0 | xargs -0 cat > allhal.bib
 ```
 
+### 2. Préparation des données pour l'entraînement du modèle
+
 * [replace_in_bib.sh](replace_in_bib.sh)
 
 Quelques remplacements dans le fichier bib (macros BibTex)
@@ -87,6 +89,8 @@ options:
                         Output file name prefix
 ```
 
+### 3. Entraînement du modèle
+
 * [bert_bibref_parsing_parser_training.py](bert_bibref_parsing_parser_training.py)
 
 Code d'entraînement du modèle
@@ -108,6 +112,10 @@ options:
 
 ```
 
+### 4. Prédiction
+
+#### 4.a Test de la prédition (ligne de commande)
+
 * [bert_bibref_parser_predict.py](bert_bibref_parser_predict.py)
 
 Code pour la prédiction.
@@ -127,5 +135,28 @@ options:
   --input INPUT         Input sentence
   --max-length MAX_LENGTH
                         Wordpiece tokenized sentence max length
+
+```
+
+#### 4.b Lancement de la prédiction (service)
+
+* Lancement du parser sous Celery (à daemonizer de préférence)
+
+```shell
+celery -A tasks worker -l info
+```
+
+* Appel du service
+
+```shell
+$ python3 parse_reference.py --help
+usage: parse_reference.py [-h] --reference REFERENCE
+
+Call Laelaps bibliographic reference parsing task.
+
+options:
+  -h, --help            show this help message and exit
+  --reference REFERENCE
+                        Full text bibligraphic reference
 
 ```

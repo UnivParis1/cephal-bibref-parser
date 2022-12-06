@@ -30,7 +30,6 @@ DEFAULT_SOURCE_DATA_FILE_NAME = 'iob.json'
 DEFAULT_OUTPUT_DIR = "output"
 MODEL_DIR = "./[OUTPUT]/[SUFFIX]"
 
-DEFAULT_MAX_LENGTH = 128
 DEFAULT_TRAINING_EPOCHS = 10
 DEFAULT_TRAINING_BATCH_SIZE = 4
 DEFAULT_VALIDATION_BATCH_SIZE = 2
@@ -48,7 +47,7 @@ def parse_arguments():
     parser.add_argument('--epochs', dest='epochs',
                         help='Number of training epochs', default=DEFAULT_TRAINING_EPOCHS)
     parser.add_argument('--max-length', dest='max_length',
-                        help='Wordpiece tokenized sentence max length', default=DEFAULT_MAX_LENGTH)
+                        help='Wordpiece tokenized sentence max length', default=ModelWrapper.DEFAULT_MAX_LENGTH)
     parser.add_argument('--learning-rate', dest='learning_rate',
                         help='Learning rate', default=DEFAULT_LEARNING_RATE)
     parser.add_argument('--training-batch-size', dest='training_batch_size',

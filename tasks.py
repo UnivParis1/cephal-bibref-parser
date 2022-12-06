@@ -3,13 +3,13 @@ from celery.signals import worker_process_init
 from transformers import CamembertTokenizerFast, CamembertForTokenClassification
 
 from data import ModelWrapper
-from utils import TextProcessor
+from utils import TextProcessor, JsonBuilder
 
 PARSER_MODEL_PATH = './model'
 
 app = Celery('tasks',
              broker='redis://localhost:6379/1',
-             backend='rpc://')
+             backend='redis://localhost:6379/2')
 
 
 def initialization():
@@ -33,4 +33,6 @@ def predict_fields(reference, max_length=ModelWrapper.DEFAULT_MAX_LENGTH):
 
     predictions_by_word = initialization.parser_model_wrapper.predictions_by_word(reference, max_length)
 
-    return predictions_by_word
+    output = JsonBuilder(reference, predictions_by_word).build()
+
+    return output

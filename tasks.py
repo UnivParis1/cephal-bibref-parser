@@ -1,5 +1,6 @@
 from celery import Celery
 from celery.signals import worker_process_init
+from dotenv import dotenv_values
 from transformers import CamembertTokenizerFast, CamembertForTokenClassification
 
 from data import ModelWrapper
@@ -7,13 +8,14 @@ from utils import TextProcessor, JsonBuilder
 
 PARSER_MODEL_PATH = './model'
 
-app = Celery('tasks',
-             broker='redis://localhost:6379/1',
-             backend='redis://localhost:6379/2')
+celery_params = dict(dotenv_values(".env.celery"))
 
+app = Celery('tasks', **celery_params)
 
 def initialization():
-    tokenizer = CamembertTokenizerFast.from_pretrained("camembert-base")
+    proxies = dict(dotenv_values(".env.proxies"))
+
+    tokenizer = CamembertTokenizerFast.from_pretrained("camembert-base", proxies=proxies)
 
     bibref_parser_model = CamembertForTokenClassification.from_pretrained(PARSER_MODEL_PATH)
 

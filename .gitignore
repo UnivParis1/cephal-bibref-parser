@@ -16,3 +16,7 @@ hal_dump
 #model formats
 *.model
 *.bin
+
+#parameters files
+.env.celery
+.env.proxies

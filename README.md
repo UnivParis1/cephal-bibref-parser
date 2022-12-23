@@ -98,17 +98,31 @@ Code d'entraînement du modèle
 ```shell
 $ python3 bert_bibref_parsing_parser_training.py --help
 
-usage: convert_jsonl_to_iob.py [-h] [--input INPUT] [--output-dir OUTPUT_DIR] [--output-filename OUTPUT_FILENAME_PREFIX]
+usage: bert_bibref_parsing_parser_training.py [-h] [--lng {fr,en,multi}] [--output OUTPUT] [--source SOURCE] [--epochs EPOCHS] [--max-length MAX_LENGTH] [--learning-rate LEARNING_RATE]
+                                              [--training-batch-size TRAINING_BATCH_SIZE] [--validation-batch-size VALIDATION_BATCH_SIZE] [--validation-size VALIDATION_SIZE] [--log-frequency LOG_FREQUENCY]
+                                              [--limit LIMIT]
 
-Convert jsonl file to IOB format.
+Fine tune Bert or Camembert for bibliographic references parsing.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
-  --input INPUT         Input sentence
-  --output-dir OUTPUT_DIR
-                        Output directory
-  --output-filename OUTPUT_FILENAME_PREFIX
-                        Output file name prefix
+  --lng {fr,en,multi}   Expected language for titles
+  --output OUTPUT       Output directory path
+  --source SOURCE       IOB source file
+  --epochs EPOCHS       Number of training epochs
+  --max-length MAX_LENGTH
+                        Wordpiece tokenized sentence max length
+  --learning-rate LEARNING_RATE
+                        Learning rate
+  --training-batch-size TRAINING_BATCH_SIZE
+                        Training batch size
+  --validation-batch-size VALIDATION_BATCH_SIZE
+                        Validation batch size
+  --validation-size VALIDATION_SIZE
+                        Validation dataset size
+  --log-frequency LOG_FREQUENCY
+                        Frequency of logs during training (number of batches)
+  --limit LIMIT         Number of samples to take from source file
 
 ```
 

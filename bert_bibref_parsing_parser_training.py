@@ -20,7 +20,7 @@ import pandas as pd
 import torch
 from torch import cuda
 from torch.utils.data import DataLoader
-from transformers import CamembertTokenizerFast, CamembertForTokenClassification, AutoConfig
+from transformers import AutoConfig, AutoTokenizer, AutoModelForTokenClassification
 from sklearn.model_selection import train_test_split
 from seqeval.metrics import classification_report
 from data import BibRefParserDataset, ModelWrapper
@@ -28,6 +28,7 @@ from data import BibRefParserDataset, ModelWrapper
 DEFAULT_SOURCE_DATA_FILE_NAME = 'iob.json'
 
 DEFAULT_OUTPUT_DIR = "output"
+DEFAULT_LANGUAGE = "fr"
 MODEL_DIR = "./[OUTPUT]/[SUFFIX]"
 
 DEFAULT_TRAINING_EPOCHS = 10
@@ -40,6 +41,8 @@ DEFAULT_LOG_FREQUENCY = 100
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Fine tune Bert or Camembert for bibliographic references parsing.')
+    parser.add_argument('--lng', dest='language', choices=['fr', 'en', 'multi'],
+                        help='Expected language for titles', default=DEFAULT_LANGUAGE)
     parser.add_argument('--output', dest='output',
                         help='Output directory path', default=DEFAULT_OUTPUT_DIR)
     parser.add_argument('--source', dest='source',
@@ -106,7 +109,8 @@ def create_data_loaders(data, ids_to_labels, labels_to_ids, max_length, tokenize
 
 def main(arguments: argparse.Namespace) -> None:
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-
+    language = arguments.language
+    print(f"Expected language for titles : {language}")
     output_dir = arguments.output
     print(f"Output directory : {output_dir}")
     source_data_file_name = arguments.source
@@ -139,21 +143,20 @@ def main(arguments: argparse.Namespace) -> None:
 
     ids_to_labels, labels_to_ids, num_labels, unique_labels = extract_labels_from_data(data)
 
-    tokenizer = CamembertTokenizerFast.from_pretrained("camembert-base")
+    tokenizer = AutoTokenizer.from_pretrained(get_config(language=language), use_fast=True)
+
+    config = AutoConfig.from_pretrained(
+        get_config(language=language),
+        num_labels=num_labels,
+        id2label=ids_to_labels,
+        label2id=labels_to_ids)
+    bibref_parser_model = AutoModelForTokenClassification.from_config(config)
+    bibref_parser_model.to(device)
 
     training_torch_dataloader, validation_torch_dataloader = create_data_loaders(data, ids_to_labels, labels_to_ids,
                                                                                  max_length, tokenizer,
                                                                                  training_batch_size,
                                                                                  validation_batch_size, validation_size)
-    config = AutoConfig.from_pretrained(
-        'camembert/camembert-base',
-        num_labels=num_labels,
-        id2label=ids_to_labels,
-        label2id=labels_to_ids)
-    bibref_parser_model = CamembertForTokenClassification.from_pretrained('camembert/camembert-base',
-                                                                          config=config)
-    bibref_parser_model.to(device)
-
     optimizer = torch.optim.Adam(params=bibref_parser_model.parameters(), lr=learning_rate)
 
     wrapper = ModelWrapper(bibref_parser_model, tokenizer, device, optimizer)
@@ -167,6 +170,15 @@ def main(arguments: argparse.Namespace) -> None:
 
     labels, predictions = wrapper.validate_model(validation_torch_dataloader)
     print(classification_report([labels], [predictions]))
+
+
+def get_config(language=None):
+    if language == 'fr':
+        return 'camembert-base'
+    if language == 'en':
+        return 'bert-base-cased'
+    if language == 'multi':
+        return 'bert-base-multilingual-cased'
 
 
 if __name__ == '__main__':

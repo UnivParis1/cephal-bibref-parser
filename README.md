@@ -11,7 +11,7 @@ Récupération des références de HAL SHS depuis l'API HAL vers un fichier Bibt
 N.B. Le script est basé sur une exécution en parallèle de paquets de {rows} requêtes.
 
 ```shell
-python3 dump_hal.py --help
+python3 dump_hal_bibtex.py --help
 usage: dump_hal.py [-h] [--rows ROWS] [--dir DIR]
 
 Fetches HAL SHS bibliographic references in Bibref format.
